@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:expense_tracker/src/components/expense_summary.dart';
 import 'package:expense_tracker/src/components/expense_tile.dart';
 import 'package:expense_tracker/src/data/expense_data.dart';
 import 'package:expense_tracker/src/models/expense_item.dart';
@@ -135,7 +136,8 @@ class _homepageState extends State<homepage> {
           body: ListView(
             children: [
               //weekly summary bar graph
-
+              ExpenseSummary(startOfWeek: value.startOfWeekDate()),
+              const SizedBox(height: 20,),
               //List of expenses
               ListView.builder(
                   shrinkWrap: true,
