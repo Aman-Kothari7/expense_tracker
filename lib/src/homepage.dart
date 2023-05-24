@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:expense_tracker/src/components/expense_summary.dart';
 import 'package:expense_tracker/src/components/expense_tile.dart';
 import 'package:expense_tracker/src/data/expense_data.dart';
@@ -28,6 +29,13 @@ class _homepageState extends State<homepage> {
   final newExpenseName = TextEditingController();
   final newExpenseAmount = TextEditingController();
   final newCategoryName = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    Provider.of<expenseData>(context, listen: false).prepareData();
+  }
 
   void addExpense() {
     String dropdownValue = expenseCategories.first;
@@ -100,14 +108,23 @@ class _homepageState extends State<homepage> {
     );
   }
 
+  void deleteExpense(expenseItem expense) {
+    Provider.of<expenseData>(context, listen: false).deleteExpense(expense);
+  }
+
   void save() {
-    expenseItem newExpense = expenseItem(
-      name: newExpenseName.text,
-      amount: newExpenseAmount.text,
-      category: newCategoryName.text,
-      dateTime: DateTime.now(),
-    );
-    Provider.of<expenseData>(context, listen: false).addExpense(newExpense);
+    //only saving if text fields are not empty
+    if (newExpenseName.text.isNotEmpty &&
+        newExpenseAmount.text.isNotEmpty &&
+        newCategoryName.text.isNotEmpty) {
+      expenseItem newExpense = expenseItem(
+        name: newExpenseName.text,
+        amount: newExpenseAmount.text,
+        category: newCategoryName.text,
+        dateTime: DateTime.now(),
+      );
+      Provider.of<expenseData>(context, listen: false).addExpense(newExpense);
+    }
 
     Navigator.pop(context);
     clear();
@@ -135,20 +152,79 @@ class _homepageState extends State<homepage> {
           ),
           body: ListView(
             children: [
-              //weekly summary bar graph
-              ExpenseSummary(startOfWeek: value.startOfWeekDate()),
-              const SizedBox(height: 20,),
+              CarouselSlider(
+                items: [
+                  Container(
+                    margin: EdgeInsets.all(6.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+
+                      ///border: Border.all()
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          offset: Offset(
+                            5.0,
+                            5.0,
+                          ),
+                          blurRadius: 10.0,
+                          spreadRadius: 2.0,
+                        ),
+                        BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(0.0, 0.0),
+                          blurRadius: 0.0,
+                          spreadRadius: 0.0,
+                        ),
+                      ],
+                    ),
+                    child:
+                        //weekly summary bar graph
+                        ExpenseSummary(startOfWeek: value.startOfWeekDate()),
+                  ),
+                  Container(
+                    margin: EdgeInsets.all(6.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: const TextField(
+                      decoration:
+                          InputDecoration(hintText: 'Enter monthly budget'),
+                    ),
+                  ),
+                ],
+                options: CarouselOptions(
+                  height: 300.0,
+                  //enlargeCenterPage: true,
+                  //autoPlay: true,
+                  aspectRatio: 16 / 9,
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enableInfiniteScroll: true,
+                  //autoPlayAnimationDuration: Duration(milliseconds: 800),
+                  viewportFraction: 0.8,
+                ),
+              ),
+
+              const SizedBox(
+                height: 20,
+              ),
               //List of expenses
               ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: value.getAllExpenseList().length,
-                  itemBuilder: (context, index) => ExpenseTile(
-                      name: value.getAllExpenseList()[index].name,
-                      amount: value.getAllExpenseList()[index].amount,
-                      //need to work on getting a default value if user doesnt select from drop down
-                      category: value.getAllExpenseList()[index].category,
-                      dateTime: value.getAllExpenseList()[index].dateTime)),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: value.getAllExpenseList().length,
+                itemBuilder: (context, index) => ExpenseTile(
+                  name: value.getAllExpenseList()[index].name,
+                  amount: value.getAllExpenseList()[index].amount,
+                  //need to work on getting a default value if user doesnt select from drop down - FIXED
+                  category: value.getAllExpenseList()[index].category == ''
+                      ? "Grocery"
+                      : value.getAllExpenseList()[index].category,
+                  dateTime: value.getAllExpenseList()[index].dateTime,
+                  deleteTapped: (p0) =>
+                      deleteExpense(value.getAllExpenseList()[index]),
+                ),
+              ),
             ],
           )),
     );

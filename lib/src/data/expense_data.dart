@@ -1,3 +1,4 @@
+import 'package:expense_tracker/src/data/hive_database.dart';
 import 'package:expense_tracker/src/date_time_calc/date_time_helper.dart';
 import 'package:expense_tracker/src/models/expense_item.dart';
 import 'package:flutter/material.dart';
@@ -17,16 +18,26 @@ class expenseData extends ChangeNotifier {
     return overallExpenseList;
   }
 
+  final db = Hivedatabase();
+  void prepareData() {
+    if (db.readData().isNotEmpty) {
+      overallExpenseList = db.readData();
+    }
+  }
+
   // add expense
   void addExpense(expenseItem newExpense) {
     overallExpenseList.add(newExpense);
     notifyListeners();
+
+    db.saveData(overallExpenseList);
   }
 
   // delete expense
   void deleteExpense(expenseItem expense) {
     overallExpenseList.remove(expense);
     notifyListeners();
+    db.saveData(overallExpenseList);
   }
 
   //get weekday from dateTime object
@@ -51,7 +62,7 @@ class expenseData extends ChangeNotifier {
     }
   }
 
-  //get the date tfor the start of the week (sunday)
+  //get the date for the start of the week (sunday)
   DateTime startOfWeekDate() {
     DateTime? startOfWeek;
 
