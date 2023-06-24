@@ -6,9 +6,13 @@ import 'package:expense_tracker/src/components/expense_tile.dart';
 import 'package:expense_tracker/src/data/expense_data.dart';
 import 'package:expense_tracker/src/models/expense_item.dart';
 import 'package:expense_tracker/src/utils/constants.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'pie_chart/pie_chart.dart' as CustomPieChart;
 
 List<String> expenseCategories = <String>[
   'Grocery',
@@ -29,6 +33,8 @@ class _homepageState extends State<homepage> {
   final newExpenseName = TextEditingController();
   final newExpenseAmount = TextEditingController();
   final newCategoryName = TextEditingController();
+
+  DateTime selectedMonthYear = DateTime.now();
 
   @override
   void initState() {
@@ -113,6 +119,10 @@ class _homepageState extends State<homepage> {
   }
 
   void save() {
+    //need to work on getting a default value if user doesnt select from drop down - FIXED
+    if (newCategoryName.text == '') {
+      newCategoryName.text = 'Grocery';
+    }
     //only saving if text fields are not empty
     if (newExpenseName.text.isNotEmpty &&
         newExpenseAmount.text.isNotEmpty &&
@@ -186,15 +196,118 @@ class _homepageState extends State<homepage> {
                     margin: EdgeInsets.all(6.0),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
+
+                      ///border: Border.all()
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          offset: Offset(
+                            5.0,
+                            5.0,
+                          ),
+                          blurRadius: 10.0,
+                          spreadRadius: 2.0,
+                        ),
+                        BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(0.0, 0.0),
+                          blurRadius: 0.0,
+                          spreadRadius: 0.0,
+                        ),
+                      ],
                     ),
-                    child: const TextField(
-                      decoration:
-                          InputDecoration(hintText: 'Enter monthly budget'),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        Builder(
+                          builder: (BuildContext context) {
+                            // Calculate and display the pie chart for selectedMonthYear
+                            Map<String, Map<String, double>>
+                                monthlyCategorySum =
+                                value.calculateMonthlyCategorySum();
+                            String monthYear =
+                                "${selectedMonthYear.month}/${selectedMonthYear.year}";
+
+                            if (monthlyCategorySum.containsKey(monthYear)) {
+                              Map<String, double> categoryData =
+                                  monthlyCategorySum[monthYear]!.map(
+                                (category, amount) =>
+                                    MapEntry(category, amount.toDouble()),
+                              );
+                              double totalAmount =
+                                  categoryData.values.reduce((a, b) => a + b);
+
+                              List<CustomPieChart.PieChartData> pieChartData =
+                                  categoryData.entries.map((entry) {
+                                double percentage = entry.value / totalAmount;
+                                return CustomPieChart.PieChartData(
+                                    entry.key, entry.value, percentage);
+                              }).toList();
+
+                              return SizedBox(
+                                //needs to be changed according to screen size
+                                width: 300,
+                                height: 300,
+                                child: CustomPieChart.PieChart(
+                                    dataMap: pieChartData),
+                              );
+                            } else {
+                              return const Text(
+                                'No expenses found for the selected month and year.',
+                                style: TextStyle(fontSize: 16),
+                              );
+                            }
+                          },
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            DropdownButton<int>(
+                              value: selectedMonthYear.month,
+                              onChanged: (int? month) {
+                                setState(() {
+                                  selectedMonthYear = DateTime(
+                                      selectedMonthYear.year,
+                                      month!,
+                                      selectedMonthYear.day);
+                                });
+                              },
+                              items: List.generate(12, (index) {
+                                return DropdownMenuItem<int>(
+                                  value: index + 1,
+                                  child: Text(DateFormat('MMMM').format(
+                                      DateTime(selectedMonthYear.year,
+                                          index + 1, 1))),
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 10),
+                            DropdownButton<int>(
+                              value: selectedMonthYear.year,
+                              onChanged: (int? year) {
+                                setState(() {
+                                  selectedMonthYear = DateTime(
+                                      year!,
+                                      selectedMonthYear.month,
+                                      selectedMonthYear.day);
+                                });
+                              },
+                              items: List.generate(5, (index) {
+                                return DropdownMenuItem<int>(
+                                  value: DateTime.now().year - index,
+                                  child: Text(
+                                      (DateTime.now().year - index).toString()),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
                 options: CarouselOptions(
-                  height: 300.0,
+                  height: 400.0,
                   //enlargeCenterPage: true,
                   //autoPlay: true,
                   aspectRatio: 16 / 9,
@@ -216,10 +329,7 @@ class _homepageState extends State<homepage> {
                 itemBuilder: (context, index) => ExpenseTile(
                   name: value.getAllExpenseList()[index].name,
                   amount: value.getAllExpenseList()[index].amount,
-                  //need to work on getting a default value if user doesnt select from drop down - FIXED
-                  category: value.getAllExpenseList()[index].category == ''
-                      ? "Grocery"
-                      : value.getAllExpenseList()[index].category,
+                  category: value.getAllExpenseList()[index].category,
                   dateTime: value.getAllExpenseList()[index].dateTime,
                   deleteTapped: (p0) =>
                       deleteExpense(value.getAllExpenseList()[index]),

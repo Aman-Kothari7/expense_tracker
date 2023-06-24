@@ -97,4 +97,45 @@ class expenseData extends ChangeNotifier {
     }
     return dailyExpenseSummary;
   }
+
+  // Calculate spending amount for each category
+  Map<String, double> calculateCategorySpending() {
+    List<expenseItem> allExpenses = db.readData();
+    Map<String, double> categorySpending = {};
+
+    for (var expense in allExpenses) {
+      if (categorySpending.containsKey(expense.category)) {
+        categorySpending[expense.category] =
+            categorySpending[expense.category]! + double.parse(expense.amount);
+      } else {
+        categorySpending[expense.category] = double.parse(expense.amount);
+      }
+    }
+    return categorySpending;
+  }
+
+  // Calculate sum of expenses by category in each month
+  Map<String, Map<String, double>> calculateMonthlyCategorySum() {
+    List<expenseItem> allExpenses = db.readData();
+    Map<String, Map<String, double>> monthlyCategorySum = {};
+
+    for (var expense in allExpenses) {
+      String category = expense.category;
+      double amount = double.parse(expense.amount);
+
+      // Extract the month and year from the expense date
+      DateTime expenseDate = expense.dateTime;
+      String monthYear = "${expenseDate.month}/${expenseDate.year}";
+
+      // Calculate the sum of expenses for each category in the month
+      if (monthlyCategorySum.containsKey(monthYear)) {
+        Map<String, double> categorySum = monthlyCategorySum[monthYear]!;
+        categorySum[category] = (categorySum[category] ?? 0) + amount;
+      } else {
+        monthlyCategorySum[monthYear] = {category: amount};
+      }
+    }
+
+    return monthlyCategorySum;
+  }
 }
