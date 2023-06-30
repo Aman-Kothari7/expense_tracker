@@ -33,7 +33,8 @@ class ExpenseTile extends StatelessWidget {
       ]),
       child: ListTile(
         //category to be shown as icon
-        leading: Text(category),
+        leading:
+            Image.asset('assets/icons/${category}.png', width: 36, height: 36),
         title: Text(name),
         subtitle: Text('${dateTime.day}/${dateTime.month}/${dateTime.year}'),
         trailing: Text('₹$amount'),

@@ -5,19 +5,21 @@ import 'package:expense_tracker/src/components/expense_summary.dart';
 import 'package:expense_tracker/src/components/expense_tile.dart';
 import 'package:expense_tracker/src/data/expense_data.dart';
 import 'package:expense_tracker/src/models/expense_item.dart';
+import 'package:expense_tracker/src/pie_chart/pie_chart.dart';
 import 'package:expense_tracker/src/utils/constants.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'pie_chart/pie_chart.dart' as CustomPieChart;
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 List<String> expenseCategories = <String>[
-  'Grocery',
+  'Housing',
   'Transportation',
-  'Bills',
+  'Food',
+  'Entertainment',
+  'Investements',
 ];
 
 class homepage extends StatefulWidget {
@@ -29,6 +31,9 @@ class homepage extends StatefulWidget {
 
 class _homepageState extends State<homepage> {
   //function to show dialog box to add new expenses
+
+  DateTime selectedDate = DateTime.now();
+  List<expenseItem> filteredExpenses = [];
 
   final newExpenseName = TextEditingController();
   final newExpenseAmount = TextEditingController();
@@ -153,8 +158,17 @@ class _homepageState extends State<homepage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<expenseData>(
-      builder: (context, value, child) => Scaffold(
+    return Consumer<expenseData>(builder: (context, value, child) {
+      // Filter expenses based on the selected date
+      filteredExpenses = value
+          .getAllExpenseList()
+          .where((expense) =>
+              expense.dateTime.year == selectedDate.year &&
+              expense.dateTime.month == selectedDate.month &&
+              expense.dateTime.day == selectedDate.day)
+          .toList();
+
+      return Scaffold(
           backgroundColor: Colors.white,
           floatingActionButton: FloatingActionButton(
             onPressed: addExpense,
@@ -237,19 +251,31 @@ class _homepageState extends State<homepage> {
                               double totalAmount =
                                   categoryData.values.reduce((a, b) => a + b);
 
-                              List<CustomPieChart.PieChartData> pieChartData =
+                              List<ChartData> pieChartData =
                                   categoryData.entries.map((entry) {
                                 double percentage = entry.value / totalAmount;
-                                return CustomPieChart.PieChartData(
+
+                                return ChartData(
                                     entry.key, entry.value, percentage);
                               }).toList();
 
                               return SizedBox(
-                                //needs to be changed according to screen size
                                 width: 300,
                                 height: 300,
-                                child: CustomPieChart.PieChart(
-                                    dataMap: pieChartData),
+                                child: PieChart(
+                                  dataMap: pieChartData,
+                                  colorPalette: [
+                                    Colors.blue,
+                                    Colors.blueGrey,
+                                    Colors.lightBlue,
+                                    Colors.lightBlueAccent,
+                                    Colors.black,
+                                    Colors.yellow,
+                                    Colors.orange,
+                                    Colors.purple,
+                                    // Add more colors for each category
+                                  ],
+                                ),
                               );
                             } else {
                               return const Text(
@@ -267,17 +293,22 @@ class _homepageState extends State<homepage> {
                               onChanged: (int? month) {
                                 setState(() {
                                   selectedMonthYear = DateTime(
-                                      selectedMonthYear.year,
-                                      month!,
-                                      selectedMonthYear.day);
+                                    selectedMonthYear.year,
+                                    month!,
+                                    selectedMonthYear.day,
+                                  );
                                 });
                               },
                               items: List.generate(12, (index) {
                                 return DropdownMenuItem<int>(
                                   value: index + 1,
-                                  child: Text(DateFormat('MMMM').format(
-                                      DateTime(selectedMonthYear.year,
-                                          index + 1, 1))),
+                                  child: Text(
+                                    DateFormat('MMMM').format(DateTime(
+                                      selectedMonthYear.year,
+                                      index + 1,
+                                      1,
+                                    )),
+                                  ),
                                 );
                               }),
                             ),
@@ -287,9 +318,10 @@ class _homepageState extends State<homepage> {
                               onChanged: (int? year) {
                                 setState(() {
                                   selectedMonthYear = DateTime(
-                                      year!,
-                                      selectedMonthYear.month,
-                                      selectedMonthYear.day);
+                                    year!,
+                                    selectedMonthYear.month,
+                                    selectedMonthYear.day,
+                                  );
                                 });
                               },
                               items: List.generate(5, (index) {
@@ -321,22 +353,41 @@ class _homepageState extends State<homepage> {
               const SizedBox(
                 height: 20,
               ),
+              IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: () => selectDate(context),
+              ),
+
               //List of expenses
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: value.getAllExpenseList().length,
+                itemCount: filteredExpenses.length,
                 itemBuilder: (context, index) => ExpenseTile(
-                  name: value.getAllExpenseList()[index].name,
-                  amount: value.getAllExpenseList()[index].amount,
-                  category: value.getAllExpenseList()[index].category,
-                  dateTime: value.getAllExpenseList()[index].dateTime,
-                  deleteTapped: (p0) =>
-                      deleteExpense(value.getAllExpenseList()[index]),
+                  name: filteredExpenses[index].name,
+                  amount: filteredExpenses[index].amount,
+                  category: filteredExpenses[index].category,
+                  dateTime: filteredExpenses[index].dateTime,
+                  deleteTapped: (p0) => deleteExpense(filteredExpenses[index]),
                 ),
               ),
             ],
-          )),
+          ));
+    });
+  }
+
+  Future<void> selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
     );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
 }

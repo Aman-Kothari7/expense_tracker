@@ -1,45 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:syncfusion_flutter_charts/charts.dart';
 
-class PieChartData {
+class ChartData {
   final String category;
   final double amount;
-  final double percentage;
+  final String percentageLabel;
 
-  PieChartData(this.category, this.amount, this.percentage);
+  ChartData(this.category, this.amount, double percentage)
+      : percentageLabel = '${(percentage * 100).toStringAsFixed(2)}%';
 }
 
 class PieChart extends StatelessWidget {
-  final List<PieChartData> dataMap;
+  final List<ChartData> dataMap;
+  final List<Color> colorPalette;
 
-  const PieChart({super.key, required this.dataMap});
+  const PieChart({Key? key, required this.dataMap, required this.colorPalette})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    List<charts.Series<PieChartData, String>> series = [
-      charts.Series(
-        id: 'Category Expenses',
-        data: dataMap,
-        domainFn: (PieChartData sales, _) => sales.category,
-        measureFn: (PieChartData sales, _) => sales.amount,
-        labelAccessorFn: (PieChartData data, _) =>
-            '${data.category}: ${data.amount.toStringAsFixed(2)} (${(data.percentage * 100).toStringAsFixed(2)}%)',
+    List<PieSeries<ChartData, String>> series = [
+      PieSeries<ChartData, String>(
+        dataSource: dataMap,
+        xValueMapper: (ChartData data, _) => data.category,
+        yValueMapper: (ChartData data, _) => data.amount,
+        pointColorMapper: (ChartData data, _) =>
+            colorPalette[dataMap.indexOf(data)],
+        dataLabelMapper: (ChartData data, _) => data.percentageLabel,
+        dataLabelSettings: const DataLabelSettings(
+          isVisible: true,
+          labelPosition: ChartDataLabelPosition.outside,
+          useSeriesColor: true,
+          textStyle: const TextStyle(fontSize: 12),
+        ),
       ),
     ];
 
-    return charts.PieChart(
-      series,
-      behaviors: [
-        charts.DatumLegend<String>(
-          position: charts.BehaviorPosition.top,
-          horizontalFirst: true,
-          desiredMaxRows: 2,
-          entryTextStyle: charts.TextStyleSpec(
-            color: charts.MaterialPalette.black,
-            fontSize: 12,
-          ),
-        ),
-      ],
+    return SfCircularChart(
+      series: series,
+      legend: Legend(
+        isVisible: true,
+        position: LegendPosition.top,
+        overflowMode: LegendItemOverflowMode.wrap,
+        textStyle: const TextStyle(fontSize: 12),
+      ),
     );
   }
 }
