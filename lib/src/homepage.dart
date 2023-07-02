@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+
 List<String> expenseCategories = <String>[
   'Housing',
   'Transportation',
@@ -49,6 +50,8 @@ class _homepageState extends State<homepage> {
   }
 
   void addExpense() {
+    selectedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+
     String dropdownValue = expenseCategories.first;
     showDialog(
       context: context,
@@ -125,6 +128,7 @@ class _homepageState extends State<homepage> {
 
   void save() {
     //need to work on getting a default value if user doesnt select from drop down - FIXED
+    
     if (newCategoryName.text == '') {
       newCategoryName.text = 'Grocery';
     }
@@ -132,12 +136,12 @@ class _homepageState extends State<homepage> {
     if (newExpenseName.text.isNotEmpty &&
         newExpenseAmount.text.isNotEmpty &&
         newCategoryName.text.isNotEmpty) {
-      expenseItem newExpense = expenseItem(
-        name: newExpenseName.text,
-        amount: newExpenseAmount.text,
-        category: newCategoryName.text,
-        dateTime: DateTime.now(),
-      );
+       expenseItem newExpense = expenseItem(
+          name: newExpenseName.text,
+          amount: newExpenseAmount.text,
+          category: newCategoryName.text,
+          dateTime: selectedDate, // Pass the selected date to the expense
+        );
       Provider.of<expenseData>(context, listen: false).addExpense(newExpense);
     }
 
@@ -159,7 +163,7 @@ class _homepageState extends State<homepage> {
   @override
   Widget build(BuildContext context) {
     return Consumer<expenseData>(builder: (context, value, child) {
-      // Filter expenses based on the selected date
+      //Filter expenses based on the selected date
       filteredExpenses = value
           .getAllExpenseList()
           .where((expense) =>
@@ -167,6 +171,13 @@ class _homepageState extends State<homepage> {
               expense.dateTime.month == selectedDate.month &&
               expense.dateTime.day == selectedDate.day)
           .toList();
+
+          // List<expenseItem> filteredExpenses = value
+          // .getAllExpenseList()
+          // .where((expense) =>
+          //     expense.dateTime.year == selectedMonthYear.year &&
+          //     expense.dateTime.month == selectedMonthYear.month)
+          // .toList();
 
       return Scaffold(
           backgroundColor: Colors.white,
@@ -259,6 +270,25 @@ class _homepageState extends State<homepage> {
                                     entry.key, entry.value, percentage);
                               }).toList();
 
+
+                              // Calculate and display the pie chart for selectedMonthYear
+                          // String monthYear =
+                          //     "${selectedMonthYear.month}/${selectedMonthYear.year}";
+
+                          // if (filteredExpenses.isNotEmpty) {
+                          //   Map<String, double> categoryData =
+                          //       value.calculateCategorySum(filteredExpenses);
+                          //   double totalAmount =
+                          //       categoryData.values.reduce((a, b) => a + b);
+
+                          //   List<ChartData> pieChartData =
+                          //       categoryData.entries.map((entry) {
+                          //     double percentage = entry.value / totalAmount;
+
+                          //     return ChartData(
+                          //         entry.key, entry.value, percentage);
+                          //   }).toList();
+
                               return SizedBox(
                                 width: 300,
                                 height: 300,
@@ -288,6 +318,7 @@ class _homepageState extends State<homepage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            
                             DropdownButton<int>(
                               value: selectedMonthYear.month,
                               onChanged: (int? month) {
@@ -299,6 +330,7 @@ class _homepageState extends State<homepage> {
                                   );
                                 });
                               },
+                              
                               items: List.generate(12, (index) {
                                 return DropdownMenuItem<int>(
                                   value: index + 1,
@@ -332,6 +364,7 @@ class _homepageState extends State<homepage> {
                                 );
                               }),
                             ),
+                            
                           ],
                         ),
                       ],
@@ -353,11 +386,33 @@ class _homepageState extends State<homepage> {
               const SizedBox(
                 height: 20,
               ),
-              IconButton(
-                icon: const Icon(Icons.calendar_today),
-                onPressed: () => selectDate(context),
+              
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                              icon: Icon(Icons.arrow_left),
+                              onPressed: () {
+                              setState(() {
+                                selectedDate = selectedDate.subtract(Duration(days: 1));
+                              });
+                            },
+                          ),
+                  IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () => selectDate(context),
+                ),
+                IconButton(
+                              icon: Icon(Icons.arrow_right),
+                              onPressed: () {
+                                setState(() {
+                                  selectedDate = selectedDate.add(Duration(days: 1));
+                                });
+                              },
+                            ),
+                ]
               ),
-
+              
               //List of expenses
               ListView.builder(
                 shrinkWrap: true,
