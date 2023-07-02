@@ -247,48 +247,46 @@ class _homepageState extends State<homepage> {
                         Builder(
                           builder: (BuildContext context) {
                             // Calculate and display the pie chart for selectedMonthYear
-                            Map<String, Map<String, double>>
-                                monthlyCategorySum =
-                                value.calculateMonthlyCategorySum();
-                            String monthYear =
-                                "${selectedMonthYear.month}/${selectedMonthYear.year}";
+                            // Map<String, Map<String, double>>
+                            //     monthlyCategorySum =
+                            //     value.calculateMonthlyCategorySum();
+                            // String monthYear =
+                            //     "${selectedMonthYear.month}/${selectedMonthYear.year}";
 
-                            if (monthlyCategorySum.containsKey(monthYear)) {
-                              Map<String, double> categoryData =
-                                  monthlyCategorySum[monthYear]!.map(
-                                (category, amount) =>
-                                    MapEntry(category, amount.toDouble()),
-                              );
-                              double totalAmount =
-                                  categoryData.values.reduce((a, b) => a + b);
+                            // if (monthlyCategorySum.containsKey(monthYear)) {
+                            //   Map<String, double> categoryData =
+                            //       monthlyCategorySum[monthYear]!.map(
+                            //     (category, amount) =>
+                            //         MapEntry(category, amount.toDouble()),
+                            //   );
+                            //   double totalAmount =
+                            //       categoryData.values.reduce((a, b) => a + b);
 
-                              List<ChartData> pieChartData =
-                                  categoryData.entries.map((entry) {
-                                double percentage = entry.value / totalAmount;
+                            //   List<ChartData> pieChartData =
+                            //       categoryData.entries.map((entry) {
+                            //     double percentage = entry.value / totalAmount;
 
-                                return ChartData(
-                                    entry.key, entry.value, percentage);
-                              }).toList();
+                            //     return ChartData(
+                            //         entry.key, entry.value, percentage);
+                            //   }).toList();
 
+                            Map<String, double> categoryData = Provider.of<expenseData>(context)
+                            .calculateMonthlyCategorySum2(selectedDate);
 
-                              // Calculate and display the pie chart for selectedMonthYear
-                          // String monthYear =
-                          //     "${selectedMonthYear.month}/${selectedMonthYear.year}";
+                        if (categoryData.isNotEmpty) {
+                          double totalAmount =
+                              categoryData.values.reduce((a, b) => a + b);
 
-                          // if (filteredExpenses.isNotEmpty) {
-                          //   Map<String, double> categoryData =
-                          //       value.calculateCategorySum(filteredExpenses);
-                          //   double totalAmount =
-                          //       categoryData.values.reduce((a, b) => a + b);
+                          List<ChartData> pieChartData =
+                              categoryData.entries.map((entry) {
+                            double percentage = entry.value / totalAmount;
 
-                          //   List<ChartData> pieChartData =
-                          //       categoryData.entries.map((entry) {
-                          //     double percentage = entry.value / totalAmount;
-
-                          //     return ChartData(
-                          //         entry.key, entry.value, percentage);
-                          //   }).toList();
-
+                            return ChartData(
+                              entry.key,
+                              entry.value,
+                              percentage,
+                            );
+                          }).toList();
                               return SizedBox(
                                 width: 300,
                                 height: 300,
