@@ -138,4 +138,24 @@ class expenseData extends ChangeNotifier {
 
     return monthlyCategorySum;
   }
+
+  Map<String, double> calculateMonthlyCategorySum2(DateTime monthYear) {
+  List<expenseItem> expenses = getAllExpenseList();
+
+  Map<String, double> categorySum = {};
+
+  for (var expense in expenses) {
+    if (expense.dateTime.year == monthYear.year &&
+        expense.dateTime.month == monthYear.month) {
+      if (categorySum.containsKey(expense.category)) {
+        categorySum[expense.category] = categorySum[expense.category]! + double.parse(expense.amount);
+      } else {
+        categorySum[expense.category] =
+            double.parse(expense.amount);
+      }
+    }
+  }
+
+  return categorySum;
+}
 }
