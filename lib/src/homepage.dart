@@ -386,7 +386,19 @@ class _homepageState extends State<homepage> {
               const SizedBox(
                 height: 20,
               ),
-              
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //       children: [
+              //         Text(
+              //           DateFormat('MMMM').format(selectedDate),
+              //           style: TextStyle(fontSize: 16),
+              //         ),
+              //         Text(
+              //           DateFormat('d').format(selectedDate),
+              //           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              //         ),
+              //       ],
+              //     ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -398,18 +410,41 @@ class _homepageState extends State<homepage> {
                               });
                             },
                           ),
+                  Column(
+                    children: [
+                      Text(
+                        DateFormat('MMMM').format(selectedDate),
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        DateFormat('d').format(selectedDate),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
                   IconButton(
                   icon: const Icon(Icons.calendar_today),
                   onPressed: () => selectDate(context),
                 ),
+                 
                 IconButton(
                               icon: Icon(Icons.arrow_right),
-                              onPressed: () {
-                                setState(() {
-                                  selectedDate = selectedDate.add(Duration(days: 1));
-                                });
-                              },
+      color: (selectedDate.year == DateTime.now().year &&
+              selectedDate.month == DateTime.now().month &&
+              selectedDate.day == DateTime.now().day)
+          ? Colors.grey.shade300
+          : Colors.black,
+      onPressed: (selectedDate.year == DateTime.now().year &&
+              selectedDate.month == DateTime.now().month &&
+              selectedDate.day == DateTime.now().day)
+          ? null
+          : () {
+              setState(() {
+                selectedDate = selectedDate.add(Duration(days: 1));
+              });
+            },
                             ),
+              
                 ]
               ),
               
