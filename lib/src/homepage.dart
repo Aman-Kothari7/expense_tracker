@@ -14,7 +14,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-
 List<String> expenseCategories = <String>[
   'Housing',
   'Transportation',
@@ -31,9 +30,21 @@ class homepage extends StatefulWidget {
 }
 
 class _homepageState extends State<homepage> {
+
+  double goalValue = 1000.0; // Default goal value
+  final goalValueController = TextEditingController();
+
+  @override
+  void dispose() {
+    goalValueController.dispose();
+    super.dispose();
+  }
+
   //function to show dialog box to add new expenses
 
   DateTime selectedDate = DateTime.now();
+
+
   List<expenseItem> filteredExpenses = [];
 
   final newExpenseName = TextEditingController();
@@ -49,8 +60,11 @@ class _homepageState extends State<homepage> {
     Provider.of<expenseData>(context, listen: false).prepareData();
   }
 
+  
+  
   void addExpense() {
-    selectedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    selectedDate =
+        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 
     String dropdownValue = expenseCategories.first;
     showDialog(
@@ -109,7 +123,9 @@ class _homepageState extends State<homepage> {
               }).toList(),
             ),
             MaterialButton(
-              onPressed: save,
+              onPressed: () {
+                save();
+              },
               child: Text('Save'),
             ),
             MaterialButton(
@@ -128,7 +144,7 @@ class _homepageState extends State<homepage> {
 
   void save() {
     //need to work on getting a default value if user doesnt select from drop down - FIXED
-    
+
     if (newCategoryName.text == '') {
       newCategoryName.text = 'Grocery';
     }
@@ -136,12 +152,12 @@ class _homepageState extends State<homepage> {
     if (newExpenseName.text.isNotEmpty &&
         newExpenseAmount.text.isNotEmpty &&
         newCategoryName.text.isNotEmpty) {
-       expenseItem newExpense = expenseItem(
-          name: newExpenseName.text,
-          amount: newExpenseAmount.text,
-          category: newCategoryName.text,
-          dateTime: selectedDate, // Pass the selected date to the expense
-        );
+      expenseItem newExpense = expenseItem(
+        name: newExpenseName.text,
+        amount: newExpenseAmount.text,
+        category: newCategoryName.text,
+        dateTime: selectedDate, // Pass the selected date to the expense
+      );
       Provider.of<expenseData>(context, listen: false).addExpense(newExpense);
     }
 
@@ -172,12 +188,18 @@ class _homepageState extends State<homepage> {
               expense.dateTime.day == selectedDate.day)
           .toList();
 
-          // List<expenseItem> filteredExpenses = value
-          // .getAllExpenseList()
-          // .where((expense) =>
-          //     expense.dateTime.year == selectedMonthYear.year &&
-          //     expense.dateTime.month == selectedMonthYear.month)
-          // .toList();
+      // Calculate the daily total
+    double dailyTotal = filteredExpenses.fold(
+          0.0,
+          (sum, expense) => sum + double.parse(expense.amount),
+        );
+
+      
+    // Calculate the monthly total
+        double monthlyTotal = value.calculateMonthlyTotal(selectedMonthYear);
+
+        // Calculate the progress towards the goal
+        double progressPercentage = monthlyTotal / goalValue;
 
       return Scaffold(
           backgroundColor: Colors.white,
@@ -185,6 +207,28 @@ class _homepageState extends State<homepage> {
             onPressed: addExpense,
             child: const Icon(Icons.add),
           ),
+          bottomNavigationBar: BottomAppBar(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Daily Total: ',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  Text(
+                    '\$${dailyTotal.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           body: ListView(
             children: [
               CarouselSlider(
@@ -215,7 +259,34 @@ class _homepageState extends State<homepage> {
                     ),
                     child:
                         //weekly summary bar graph
+                        //ExpenseSummary(startOfWeek: value.startOfWeekDate()),
+
                         ExpenseSummary(startOfWeek: value.startOfWeekDate()),
+                        
+                  ),
+                  // Monthly total slide
+                  Container(
+                    margin: EdgeInsets.all(6.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          offset: Offset(
+                            5.0,
+                            5.0,
+                          ),
+                          blurRadius: 10.0,
+                          spreadRadius: 2.0,
+                        ),
+                        BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(0.0, 0.0),
+                          blurRadius: 0.0,
+                          spreadRadius: 0.0,
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
                     margin: EdgeInsets.all(6.0),
@@ -241,6 +312,8 @@ class _homepageState extends State<homepage> {
                         ),
                       ],
                     ),
+                    
+                    
                     child: Column(
                       children: [
                         const SizedBox(height: 20),
@@ -270,23 +343,24 @@ class _homepageState extends State<homepage> {
                             //         entry.key, entry.value, percentage);
                             //   }).toList();
 
-                            Map<String, double> categoryData = Provider.of<expenseData>(context)
-                            .calculateMonthlyCategorySum2(selectedDate);
+                            Map<String, double> categoryData =
+                                Provider.of<expenseData>(context)
+                                    .calculateMonthlyCategorySum2(selectedDate);
 
-                        if (categoryData.isNotEmpty) {
-                          double totalAmount =
-                              categoryData.values.reduce((a, b) => a + b);
+                            if (categoryData.isNotEmpty) {
+                              double totalAmount =
+                                  categoryData.values.reduce((a, b) => a + b);
 
-                          List<ChartData> pieChartData =
-                              categoryData.entries.map((entry) {
-                            double percentage = entry.value / totalAmount;
+                              List<ChartData> pieChartData =
+                                  categoryData.entries.map((entry) {
+                                double percentage = entry.value / totalAmount;
 
-                            return ChartData(
-                              entry.key,
-                              entry.value,
-                              percentage,
-                            );
-                          }).toList();
+                                return ChartData(
+                                  entry.key,
+                                  entry.value,
+                                  percentage,
+                                );
+                              }).toList();
                               return SizedBox(
                                 width: 300,
                                 height: 300,
@@ -316,7 +390,6 @@ class _homepageState extends State<homepage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            
                             DropdownButton<int>(
                               value: selectedMonthYear.month,
                               onChanged: (int? month) {
@@ -328,7 +401,6 @@ class _homepageState extends State<homepage> {
                                   );
                                 });
                               },
-                              
                               items: List.generate(12, (index) {
                                 return DropdownMenuItem<int>(
                                   value: index + 1,
@@ -362,7 +434,6 @@ class _homepageState extends State<homepage> {
                                 );
                               }),
                             ),
-                            
                           ],
                         ),
                       ],
@@ -397,59 +468,56 @@ class _homepageState extends State<homepage> {
               //         ),
               //       ],
               //     ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                              icon: Icon(Icons.arrow_left),
-                              onPressed: () {
-                              setState(() {
-                                selectedDate = selectedDate.subtract(Duration(days: 1));
-                              });
-                            },
-                          ),
-                  Column(
-                    children: [
-                      Text(
-                        DateFormat('MMMM').format(selectedDate),
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      Text(
-                        DateFormat('d').format(selectedDate),
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  IconButton(
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_left),
+                  onPressed: () {
+                    setState(() {
+                      selectedDate = selectedDate.subtract(Duration(days: 1));
+                    });
+                  },
+                ),
+                Column(
+                  children: [
+                    Text(
+                      DateFormat('MMMM').format(selectedDate),
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    Text(
+                      DateFormat('d').format(selectedDate),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                IconButton(
                   icon: const Icon(Icons.calendar_today),
                   onPressed: () => selectDate(context),
                 ),
-                 
                 IconButton(
-                              icon: Icon(Icons.arrow_right),
-      color: (selectedDate.year == DateTime.now().year &&
-              selectedDate.month == DateTime.now().month &&
-              selectedDate.day == DateTime.now().day)
-          ? Colors.grey.shade300
-          : Colors.black,
-      onPressed: (selectedDate.year == DateTime.now().year &&
-              selectedDate.month == DateTime.now().month &&
-              selectedDate.day == DateTime.now().day)
-          ? null
-          : () {
-              setState(() {
-                selectedDate = selectedDate.add(Duration(days: 1));
-              });
-            },
-                            ),
-              
-                ]
-              ),
+                  icon: Icon(Icons.arrow_right),
+                  color: (selectedDate.year == DateTime.now().year &&
+                          selectedDate.month == DateTime.now().month &&
+                          selectedDate.day == DateTime.now().day)
+                      ? Colors.grey.shade300
+                      : Colors.black,
+                  onPressed: (selectedDate.year == DateTime.now().year &&
+                          selectedDate.month == DateTime.now().month &&
+                          selectedDate.day == DateTime.now().day)
+                      ? null
+                      : () {
+                          setState(() {
+                            selectedDate = selectedDate.add(Duration(days: 1));
+                          });
+                        },
+                ),
+              ]),
               
               //List of expenses
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                reverse: true,
                 itemCount: filteredExpenses.length,
                 itemBuilder: (context, index) => ExpenseTile(
                   name: filteredExpenses[index].name,
@@ -479,3 +547,4 @@ class _homepageState extends State<homepage> {
     }
   }
 }
+
