@@ -158,4 +158,19 @@ class expenseData extends ChangeNotifier {
 
   return categorySum;
 }
+double calculateMonthlyTotal(DateTime monthYear) {
+    List<expenseItem> expenses = getAllExpenseList();
+
+    double totalAmount = 0.0;
+
+    for (var expense in expenses) {
+      if (expense.dateTime.year == monthYear.year &&
+          expense.dateTime.month == monthYear.month) {
+        totalAmount += double.parse(expense.amount);
+      }
+    }
+
+    return totalAmount;
+  }
 }
+

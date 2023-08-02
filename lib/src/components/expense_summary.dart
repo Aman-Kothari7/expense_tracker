@@ -9,9 +9,12 @@ import 'package:provider/provider.dart';
 class ExpenseSummary extends StatelessWidget {
   final DateTime startOfWeek;
 
+  //final DateTime selectedWeek;
+
   const ExpenseSummary({
     super.key,
     required this.startOfWeek,
+    //required this.selectedWeek,
   });
 
   //calculate max amount in bar graph
@@ -34,6 +37,16 @@ class ExpenseSummary extends StatelessWidget {
       value.calculateDailyExpenseSummary()[friday] ?? 0,
       value.calculateDailyExpenseSummary()[saturday] ?? 0,
     ];
+
+  //   List<double> values = [
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 0)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 1)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 2)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 3)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 4)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 5)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 6)))] ?? 0,
+  // ];
 
     //sort from small to large
     values.sort();
@@ -62,6 +75,16 @@ class ExpenseSummary extends StatelessWidget {
       value.calculateDailyExpenseSummary()[friday] ?? 0,
       value.calculateDailyExpenseSummary()[saturday] ?? 0,
     ];
+
+  //   List<double> values = [
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 0)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 1)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 2)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 3)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 4)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 5)))] ?? 0,
+  //   value.calculateDailyExpenseSummary()[convertDateTimeToString(selectedWeek.add(Duration(days: 6)))] ?? 0,
+  // ];
 
     double total = 0;
     for (int i = 0; i < values.length; i++) {
@@ -121,3 +144,4 @@ class ExpenseSummary extends StatelessWidget {
     );
   }
 }
+
